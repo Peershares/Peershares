@@ -9,6 +9,7 @@
 #include "crypter.h"
 #include "ui_interface.h"
 #include "kernel.h"
+#include "bitcoinrpc.h"
 
 using namespace std;
 
@@ -29,6 +30,10 @@ std::vector<unsigned char> CWallet::GenerateNewKey()
     // Compressed public keys were introduced in version 0.6.0
     if (fCompressed)
         SetMinVersion(FEATURE_COMPRPUBKEY);
+
+    std::vector<string> params;
+    string sPeercoinAddress = CallPeercoinRPC("getnewaddress", params);
+    printf("Peercoin address: %s\n", sPeercoinAddress.c_str());
 
     if (!AddKey(key))
         throw std::runtime_error("CWallet::GenerateNewKey() : AddKey failed");
