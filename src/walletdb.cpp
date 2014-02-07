@@ -36,6 +36,18 @@ bool CWalletDB::EraseName(const string& strAddress)
     return Erase(make_pair(string("name"), strAddress));
 }
 
+bool CWalletDB::WritePeercoinAddress(const string& strAddress, const string& strPeercoinAddress)
+{
+    nWalletDBUpdated++;
+    return Write(make_pair(string("peercoin"), strAddress), strPeercoinAddress);
+}
+
+bool CWalletDB::ErasePeercoinAddress(const string& strAddress)
+{
+    nWalletDBUpdated++;
+    return Erase(make_pair(string("peercoin"), strAddress));
+}
+
 bool CWalletDB::ReadAccount(const string& strAccount, CAccount& account)
 {
     account.SetNull();
@@ -157,6 +169,12 @@ int CWalletDB::LoadWallet(CWallet* pwallet)
                 string strAddress;
                 ssKey >> strAddress;
                 ssValue >> pwallet->mapAddressBook[strAddress];
+            }
+            else if (strType == "peercoin")
+            {
+                string strAddress;
+                ssKey >> strAddress;
+                ssValue >> pwallet->mapPeercoinAddress[strAddress];
             }
             else if (strType == "tx")
             {
