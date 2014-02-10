@@ -42,6 +42,10 @@ public:
 
     bool EraseName(const std::string& strAddress);
 
+    bool WritePeercoinAddress(const std::string& strAddress, const std::string& strPeercoinAddress);
+
+    bool ErasePeercoinAddress(const std::string& strAddress);
+
     bool ReadTx(uint256 hash, CWalletTx& wtx)
     {
         return Read(std::make_pair(std::string("tx"), hash), wtx);

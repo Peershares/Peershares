@@ -639,6 +639,45 @@ Value getaddressesbyaccount(const Array& params, bool fHelp)
     return ret;
 }
 
+Value getpeercoinaddresses(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "getpeercoinaddresses <account>\n"
+            "Returns the list of addresses and the associated peercoin address for the given account.");
+
+/*
+    printf("Address book:\n");
+    BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, string)& item, pwalletMain->mapAddressBook)
+    {
+        const CBitcoinAddress& address = item.first;
+        const string& strName = item.second;
+        printf("  %s %s\n",address.ToString().c_str(),strName.c_str());
+    }
+    
+    printf("Peercoin address map:\n");
+    BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, string)& item, pwalletMain->mapPeercoinAddress)
+    {
+        const CBitcoinAddress& address = item.first;
+        const string& strName = item.second;
+        printf("  %s %s\n",address.ToString().c_str(),strName.c_str());
+    }
+*/
+
+    string strAccount = AccountFromValue(params[0]);
+
+    // Find all addresses that have the given account
+    Object ret;
+    BOOST_FOREACH(const PAIRTYPE(CBitcoinAddress, string)& item, pwalletMain->mapAddressBook)
+    {
+        const CBitcoinAddress& address = item.first;
+        const string& strName = item.second;
+        if (strName == strAccount)
+            ret.push_back(Pair(address.ToString(), pwalletMain->mapPeercoinAddress[address]));
+    }
+    return ret;
+}
+
 Value settxfee(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 1 || AmountFromValue(params[0]) < MIN_TX_FEE)
@@ -2458,6 +2497,7 @@ static const CRPCCommand vRPCCommands[] =
     { "setaccount",             &setaccount,             true },
     { "getaccount",             &getaccount,             false },
     { "getaddressesbyaccount",  &getaddressesbyaccount,  true },
+    { "getpeercoinaddresses",   &getpeercoinaddresses,   true },
     { "sendtoaddress",          &sendtoaddress,          false },
     { "getreceivedbyaddress",   &getreceivedbyaddress,   false },
     { "getreceivedbyaccount",   &getreceivedbyaccount,   false },

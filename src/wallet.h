@@ -111,6 +111,8 @@ public:
 
     std::map<CBitcoinAddress, std::string> mapAddressBook;
 
+    std::map<CBitcoinAddress, std::string> mapPeercoinAddress;
+
     std::vector<unsigned char> vchDefaultKey;
 
     // check whether we are allowed to upgrade (or already support) to the named feature
@@ -237,6 +239,10 @@ public:
     bool SetAddressBookName(const CBitcoinAddress& address, const std::string& strName);
 
     bool DelAddressBookName(const CBitcoinAddress& address);
+
+    bool SetPeercoinAddress(const CBitcoinAddress& address, const std::string& strPeercoinAddress);
+
+    bool DelPeercoinAddress(const CBitcoinAddress& address);
 
     void UpdatedTransaction(const uint256 &hashTx)
     {
