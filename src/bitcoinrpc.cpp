@@ -13,6 +13,7 @@
 #include "checkpoints.h"
 #include "ui_interface.h"
 #include "bitcoinrpc.h"
+#include "distribution.h"
 
 #undef printf
 #include <boost/asio.hpp>
@@ -1095,6 +1096,39 @@ Value sendmany(const Array& params, bool fHelp)
         throw JSONRPCError(-4, "Transaction commit failed");
 
     return wtx.GetHash().GetHex();
+}
+
+Value distribute(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "distribute <amount>\n"
+            "amount is the the number of peercoins to distribute, in double-precision floating point number");
+
+    BalanceMap mapBalance;
+
+    // Temporary fake balance
+    mapBalance[CBitcoinAddress("mv2DsiCoYoQ8kuXUrVGvjuWxMa1XAMnCeR")] = 10;
+    mapBalance[CBitcoinAddress("mmECxg7KHhXnDeyRVEsmBWNeRkF1h3r84i")] = 20;
+
+    double dAmount = params[0].get_real();
+    double dMinPayout = boost::lexical_cast<double>(GetArg("-distributionminpayout", "0.01"));
+
+    printf("Distributing %f peercoins to %d addresses with a minimum payout of %f\n", dAmount, mapBalance.size(), dMinPayout);
+
+    DividendDistributor distributor(mapBalance);
+    distributor.Distribute(dAmount, dMinPayout);
+
+    vector<Object> vOutputs;
+    distributor.GenerateOutputs(1, vOutputs);
+
+    printf("Generated the following distribution outputs:\n");
+    BOOST_FOREACH(Object &output, vOutputs)
+    {
+        printf("%s\n", write_string(Value(output), true).c_str());
+    }
+
+    return *vOutputs.begin();
 }
 
 Value addmultisigaddress(const Array& params, bool fHelp)
@@ -2474,6 +2508,7 @@ static const CRPCCommand vRPCCommands[] =
     { "move",                   &movecmd,                false },
     { "sendfrom",               &sendfrom,               false },
     { "sendmany",               &sendmany,               false },
+    { "distribute",             &distribute,             true },
     { "addmultisigaddress",     &addmultisigaddress,     false },
     { "getblock",               &getblock,               false },
     { "getblockhash",           &getblockhash,           false },
@@ -3120,6 +3155,7 @@ Array RPCConvertValues(const std::string &strMethod, const std::vector<std::stri
         params[1] = v.get_obj();
     }
     if (strMethod == "sendmany"                && n > 2) ConvertTo<boost::int64_t>(params[2]);
+    if (strMethod == "distribute"              && n > 0) ConvertTo<double>(params[0]);
     if (strMethod == "reservebalance"          && n > 0) ConvertTo<bool>(params[0]);
     if (strMethod == "reservebalance"          && n > 1) ConvertTo<double>(params[1]);
     if (strMethod == "addmultisigaddress"      && n > 0) ConvertTo<boost::int64_t>(params[0]);
