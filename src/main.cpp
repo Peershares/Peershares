@@ -20,7 +20,9 @@ using namespace boost;
 //
 // Global state
 //
-
+static const uint256 hashGenesisBlockOfficial("0x000000d78e35e381ca738ceb966b9faf528f0970d994ce4eb4560b56cbe2f6c4");
+static const uint256 hashGenesisBlockTestNet ("0x000001df948ddf5a15f6eb0a5c57047600f6817ad2fcdf615a021700ae99db08");
+                                                
 CCriticalSection cs_setpwalletRegistered;
 set<CWallet*> setpwalletRegistered;
 
