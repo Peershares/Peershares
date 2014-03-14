@@ -41,11 +41,12 @@ inline bool MoneyRange(int64 nValue) { return (nValue >= 0 && nValue <= MAX_MONE
 static const int COINBASE_MATURITY_PPC = 100; //Same as in Bitcoin, where Peercoin is 500
 // Threshold for nLockTime: below this value it is interpreted as block number, otherwise as UNIX timestamp.
 static const int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
-static const int STAKE_TARGET_SPACING = 15 * 1; // 15 second block spacing for fast testing only -- do not merge this 
-static const int STAKE_MIN_AGE = (60 * 60 * 24 * 3) / 120; // minimum age for coin age changed to 3 days but modified for fast testing to be 120th of that just as STAKE_TARGET_SPACING is 120th of its normal value -- do not merge this
+static const int STAKE_MIN_AGE = 60 * 60 * 24 * 3; // minimum age for coin age changed to 3 days
 static const int STAKE_MAX_AGE = 60 * 60 * 24 * 90; // stake age of full weight
 static const int64 IPO_SHARES = 1000000000 * COIN; // Total number of shares to create using proof of work (intented for IPO)
 static const int64 PROOF_OF_WORK_BLOCKS = 400; // Block height of the last proof of work block
+
+int GetStakeTargetSpacing();
 
 #ifdef USE_UPNP
 static const int fHaveUPnP = true;
