@@ -11,7 +11,7 @@ using namespace std;
 
 // Protocol switch time of v0.3 kernel protocol
 unsigned int nProtocolV03SwitchTime     = 1394841600; // 2014-03-15 00:00:00 UTC
-unsigned int nProtocolV03TestSwitchTime = 1359781000;
+unsigned int nProtocolV03TestSwitchTime = 1396224000; // 2014-03-31 00:00:00 UTC
 
 // Modifier interval: time to elapse before new modifier is computed
 // Set to 6-hour for production network and 20-minute for test network
@@ -144,7 +144,7 @@ bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64& nStakeModif
 
     // Sort candidate blocks by timestamp
     vector<pair<int64, uint256> > vSortedByTimestamp;
-    vSortedByTimestamp.reserve(64 * nModifierInterval / STAKE_TARGET_SPACING);
+    vSortedByTimestamp.reserve(64 * nModifierInterval / GetStakeTargetSpacing() );
     int64 nSelectionInterval = GetStakeModifierSelectionInterval();
     int64 nSelectionIntervalStart = (pindexPrev->GetBlockTime() / nModifierInterval) * nModifierInterval - nSelectionInterval;
     const CBlockIndex* pindex = pindexPrev;

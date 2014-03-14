@@ -20,7 +20,9 @@ using namespace boost;
 //
 // Global state
 //
-
+static const uint256 hashGenesisBlockOfficial("0x000000d78e35e381ca738ceb966b9faf528f0970d994ce4eb4560b56cbe2f6c4");
+static const uint256 hashGenesisBlockTestNet ("0x000001df948ddf5a15f6eb0a5c57047600f6817ad2fcdf615a021700ae99db08");
+                                                
 CCriticalSection cs_setpwalletRegistered;
 set<CWallet*> setpwalletRegistered;
 
@@ -64,6 +66,14 @@ int64 nHPSTimerStart;
 
 // Settings
 int64 nTransactionFee = MIN_TX_FEE;
+
+static const int STAKE_TARGET_SPACING = 60 * 30; // 30 minute block spacing 
+static const int STAKE_TARGET_SPACING_TESTNET = 15; // 15 second block spacing for testnet
+
+int GetStakeTargetSpacing()
+{
+    return fTestNet ? STAKE_TARGET_SPACING_TESTNET : STAKE_TARGET_SPACING;
+}
 
 
 
@@ -842,7 +852,6 @@ int64 GetProofOfStakeReward(int64 nCoinAge)
 }
 
 static const int64 nTargetTimespan = 7 * 24 * 60 * 60;  // one week
-static const int64 nTargetSpacingWorkMax = 12 * STAKE_TARGET_SPACING; // 2-hour
 
 //
 // minimum amount of work that could possibly be required nTime after
@@ -898,7 +907,7 @@ unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, bool fP
     // ppcoin: retarget with exponential moving toward target spacing
     CBigNum bnNew;
     bnNew.SetCompact(pindexPrev->nBits);
-    int64 nTargetSpacing = fProofOfStake? STAKE_TARGET_SPACING : min(nTargetSpacingWorkMax, (int64) STAKE_TARGET_SPACING * (1 + pindexLast->nHeight - pindexPrev->nHeight));
+    int64 nTargetSpacing = fProofOfStake? GetStakeTargetSpacing() : min((int64)(GetStakeTargetSpacing()*12), (int64) GetStakeTargetSpacing() * (1 + pindexLast->nHeight - pindexPrev->nHeight));
     int64 nInterval = nTargetTimespan / nTargetSpacing;
     bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
     bnNew /= ((nInterval + 1) * nTargetSpacing);
@@ -2188,10 +2197,10 @@ bool LoadBlockIndex(bool fAllowNew)
     if (fTestNet)
     {
         hashGenesisBlock = hashGenesisBlockTestNet;
-        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 28);
-        nStakeMinAge = 60 * 60 * 24; // test net min age is 1 day
+        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 20);
+        nStakeMinAge = 300; // test net min age is 5 minutes
         nCoinbaseMaturity = 60;
-        bnInitialHashTarget = CBigNum(~uint256(0) >> 29);
+        bnInitialHashTarget = CBigNum(~uint256(0) >> 20);
         nModifierInterval = 60 * 20; // test net modifier interval is 20 minutes
     }
 
@@ -2223,8 +2232,19 @@ bool LoadBlockIndex(bool fAllowNew)
 
         // Genesis block
         const char* pszTimestamp = "Matonis 07-AUG-2012 Parallel Currencies And The Roadmap To Monetary Freedom";
+        unsigned int nTimeGenesis=1394140389;
+        unsigned int nNonceGenesis=0;
+
+        if (fTestNet)
+        {
+            pszTimestamp="Mar 7, 2014 Dorian Satoshi Nakamoto denies creating Bitcoin in AP interview";
+            nTimeGenesis=1394250000;
+            nNonceGenesis=125399;
+        }
+        
+            
         CTransaction txNew;
-        txNew.nTime = 1394140389;
+        txNew.nTime = nTimeGenesis;
         txNew.vin.resize(1);
         txNew.vout.resize(1);
         txNew.vin[0].scriptSig = CScript() << 486604799 << CBigNum(9999) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
@@ -2234,16 +2254,10 @@ bool LoadBlockIndex(bool fAllowNew)
         block.hashPrevBlock = 0;
         block.hashMerkleRoot = block.BuildMerkleTree();
         block.nVersion = 1;
-        block.nTime    = 1394140389;
+        block.nTime    = nTimeGenesis;
         block.nBits    = bnProofOfWorkLimit.GetCompact();
-        block.nNonce   = 0;
+        block.nNonce   = nNonceGenesis;
 
-        if (fTestNet)
-        {
-            block.nTime    = 1345090000;
-            block.nNonce   = 122894938;
-        }
-        
         CBigNum bnTarget;
         bnTarget.SetCompact(block.nBits);
 
@@ -2268,7 +2282,11 @@ bool LoadBlockIndex(bool fAllowNew)
         printf("%s\n", block.GetHash().ToString().c_str());
         printf("%s\n", hashGenesisBlock.ToString().c_str());
         printf("%s\n", block.hashMerkleRoot.ToString().c_str());
-        assert(block.hashMerkleRoot == uint256("0xf88246c72a053cc2176dbf2ac884bcf79f021bba9c2c3c8fccc0735c37d9354c"));
+        if (!fTestNet)
+            assert(block.hashMerkleRoot == uint256("0xf88246c72a053cc2176dbf2ac884bcf79f021bba9c2c3c8fccc0735c37d9354c"));
+        else
+            assert(block.hashMerkleRoot == uint256("0x07c1ed6a29eb50960b476ad05cfd686021f88384b12b1ca351a374abd55fcd3c"));
+
         block.print();
         assert(block.GetHash() == hashGenesisBlock);
         assert(block.CheckBlock());
@@ -3578,9 +3596,9 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, CWallet* pwallet, bool fProofOfS
         return NULL;
 	
 	//allow only PoW blocks at first, later only PoS blocks
-    if (fProofOfStake && nBestHeight <= PROOF_OF_WORK_BLOCKS)
+    if (fProofOfStake && nBestHeight+1 <= PROOF_OF_WORK_BLOCKS)
 		return NULL;
-    if (!fProofOfStake && nBestHeight > PROOF_OF_WORK_BLOCKS)
+    if (!fProofOfStake && nBestHeight+1 > PROOF_OF_WORK_BLOCKS)
 		return NULL;
 
 
