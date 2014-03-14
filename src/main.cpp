@@ -68,6 +68,14 @@ int64 nHPSTimerStart;
 // Settings
 int64 nTransactionFee = MIN_TX_FEE;
 
+static const int STAKE_TARGET_SPACING = 60 * 30; // 30 minute block spacing 
+static const int STAKE_TARGET_SPACING_TESTNET = 15; // 15 second block spacing for testnet
+
+int GetStakeTargetSpacing()
+{
+    return fTestNet ? STAKE_TARGET_SPACING_TESTNET : STAKE_TARGET_SPACING;
+}
+
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -845,7 +853,6 @@ int64 GetProofOfStakeReward(int64 nCoinAge)
 }
 
 static const int64 nTargetTimespan = 7 * 24 * 60 * 60;  // one week
-static const int64 nTargetSpacingWorkMax = 12 * STAKE_TARGET_SPACING; // 2-hour
 
 //
 // minimum amount of work that could possibly be required nTime after
@@ -901,7 +908,7 @@ unsigned int static GetNextTargetRequired(const CBlockIndex* pindexLast, bool fP
     // ppcoin: retarget with exponential moving toward target spacing
     CBigNum bnNew;
     bnNew.SetCompact(pindexPrev->nBits);
-    int64 nTargetSpacing = fProofOfStake? STAKE_TARGET_SPACING : min(nTargetSpacingWorkMax, (int64) STAKE_TARGET_SPACING * (1 + pindexLast->nHeight - pindexPrev->nHeight));
+    int64 nTargetSpacing = fProofOfStake? GetStakeTargetSpacing() : min((int64)(GetStakeTargetSpacing()*12), (int64) GetStakeTargetSpacing() * (1 + pindexLast->nHeight - pindexPrev->nHeight));
     int64 nInterval = nTargetTimespan / nTargetSpacing;
     bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
     bnNew /= ((nInterval + 1) * nTargetSpacing);
