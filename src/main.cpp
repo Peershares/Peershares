@@ -2244,7 +2244,6 @@ bool LoadBlockIndex(bool fAllowNew)
             nNonceGenesis=125399;
         }
 
-
         CTransaction txNew;
         txNew.nTime = nTimeGenesis;
         txNew.vin.resize(1);
