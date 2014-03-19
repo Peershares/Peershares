@@ -27,6 +27,7 @@
 #include "guiutil.h"
 #include "rpcconsole.h"
 #include "wallet.h"
+#include "distributedivdialog.h"
 
 #ifdef Q_WS_MAC
 #include "macdockiconhandler.h"
@@ -69,7 +70,8 @@ BitcoinGUI::BitcoinGUI(QWidget *parent):
     aboutQtAction(0),
     trayIcon(0),
     notificator(0),
-    rpcConsole(0)
+    rpcConsole(0),
+    fLocalChainUpToDate(false)
 {
     resize(850, 550);
     setWindowTitle(tr("Peercoin (PPCoin) Wallet"));
@@ -267,6 +269,11 @@ void BitcoinGUI::createActions()
     connect(encryptWalletAction, SIGNAL(triggered(bool)), this, SLOT(encryptWallet(bool)));
     connect(backupWalletAction, SIGNAL(triggered()), this, SLOT(backupWallet()));
     connect(changePassphraseAction, SIGNAL(triggered()), this, SLOT(changePassphrase()));
+
+    distributeDividendsAction = new QAction(tr("Distribute Dividends"), this);
+    distributeDividendsAction->setToolTip(tr("Distribute Dividends"));
+    connect(distributeDividendsAction, SIGNAL(triggered()), this, SLOT( distributeDividendsClicked()));
+
     connect(exportPeercoinKeysAction, SIGNAL(triggered()), this, SLOT(exportPeercoinKeys()));
 }
 
@@ -290,8 +297,9 @@ void BitcoinGUI::createMenuBar()
     file->addSeparator();
     file->addAction(quitAction);
 
-    QMenu *shares = appMenuBar->addMenu(tr("&Shares"));
+    QMenu *shares = appMenuBar->addMenu(tr("S&hares"));
     shares->addAction(exportPeercoinKeysAction);
+	shares->addAction(distributeDividendsAction);
 
     QMenu *settings = appMenuBar->addMenu(tr("&Settings"));
     settings->addAction(encryptWalletAction);
@@ -491,6 +499,8 @@ void BitcoinGUI::setNumConnections(int count)
 
 void BitcoinGUI::setNumBlocks(int count)
 {
+    fLocalChainUpToDate=false;
+
     // don't show / hide progressBar and it's label if we have no connection(s) to the network
     if (!clientModel || clientModel->getNumConnections() == 0)
     {
@@ -570,6 +580,7 @@ void BitcoinGUI::setNumBlocks(int count)
     {
         tooltip = tr("Up to date") + QString(".\n") + tooltip;
         labelBlocksIcon->setPixmap(QIcon(":/icons/synced").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
+        fLocalChainUpToDate=true;
     }
     else
     {
@@ -880,4 +891,10 @@ void BitcoinGUI::showNormalIfMinimized()
         show();
     if(isMinimized()) // Unminimize, if minimized
         showNormal();
+}
+
+void BitcoinGUI::distributeDividendsClicked()
+{
+    DistributeDivDialog dd(this);
+    dd.exec();
 }

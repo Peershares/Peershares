@@ -9,6 +9,11 @@
 #include <deque>
 #include <boost/array.hpp>
 #include <boost/foreach.hpp>
+
+#ifdef WIN32
+#include <winsock2.h>
+#endif
+
 #include <openssl/rand.h>
 
 #ifndef WIN32

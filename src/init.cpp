@@ -459,6 +459,11 @@ bool AppInit2(int argc, char* argv[])
         printf(" rescan      %15"PRI64d"ms\n", GetTimeMillis() - nStart);
     }
 
+//#if !defined(QT_GUI)
+//    void CmdLine_GetAddrBalances();
+//    CmdLine_GetAddrBalances(); //test scan address balance
+//#endif
+
     InitMessage(_("Done loading"));
     printf("Done loading\n");
 

@@ -88,6 +88,7 @@ xCXXFLAGS=-pthread -Wall -Wextra -Wno-sign-compare -Wno-invalid-offsetof -Wno-un
     $(DEBUGFLAGS) $(DEFS) $(HARDENING) $(CXXFLAGS)
 
 OBJS= \
+    obj/scanbalance.o \
     obj/version.o \
     obj/checkpoints.o \
     obj/netbase.o \
