@@ -3933,7 +3933,7 @@ void BitcoinMiner(CWallet *pwallet, bool fProofOfStake)
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
 
     // Each thread has its own key and counter
-    CReserveKey reservekey(pwallet);
+    CDefaultKey reservekey(pwallet);
     unsigned int nExtraNonce = 0;
 
     while (fGenerateBitcoins || fProofOfStake)
