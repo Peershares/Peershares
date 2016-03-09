@@ -101,6 +101,7 @@ class CTxIndex;
 
 void RegisterWallet(CWallet* pwalletIn);
 void UnregisterWallet(CWallet* pwalletIn);
+void SyncWithWallets(const CTransaction& tx, const CBlock* pblock = NULL, bool fUpdate = false, bool fConnect = true);
 bool ProcessBlock(CNode* pfrom, CBlock* pblock);
 bool CheckDiskSpace(uint64 nAdditionalBytes=0);
 FILE* OpenBlockFile(unsigned int nFile, unsigned int nBlockPos, const char* pszMode="rb");
@@ -124,8 +125,7 @@ std::string GetWarnings(std::string strFor);
 uint256 WantedByOrphan(const CBlock* pblockOrphan);
 const CBlockIndex* GetLastBlockIndex(const CBlockIndex* pindex, bool fProofOfStake);
 void BitcoinMiner(CWallet *pwallet, bool fProofOfStake);
-
-
+bool GetTransaction(const uint256 &hash, CTransaction &tx, uint256 &hashBlock);
 
 
 
@@ -401,8 +401,6 @@ public:
     std::string ToString() const
     {
         if (IsEmpty()) return "CTxOut(empty)";
-        if (scriptPubKey.size() < 6)
-            return "CTxOut(error)";
         return strprintf("CTxOut(nValue=%s, scriptPubKey=%s)", FormatMoney(nValue).c_str(), scriptPubKey.ToString().c_str());
     }
 
@@ -711,6 +709,7 @@ public:
     }
 
 
+    bool ReadFromDisk(CTxDB& txdb, const uint256& hash, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout, CTxIndex& txindexRet);
     bool ReadFromDisk(CTxDB& txdb, COutPoint prevout);
     bool ReadFromDisk(COutPoint prevout);
@@ -961,16 +960,16 @@ public:
     void UpdateTime(const CBlockIndex* pindexPrev);
 
     // peercoin: entropy bit for stake modifier if chosen by modifier
-    unsigned int GetStakeEntropyBit() const
-    {
-        uint160 hashSig = Hash160(vchBlockSig);
-        if (fDebug && GetBoolArg("-printstakemodifier"))
-            printf("GetStakeEntropyBit: hashSig=%s", hashSig.ToString().c_str());
-        hashSig >>= 159; // take the first bit of the hash
-        if (fDebug && GetBoolArg("-printstakemodifier"))
-            printf(" entropybit=%d\n", hashSig.Get64());
-        return hashSig.Get64();
-    }
+//    unsigned int GetStakeEntropyBit() const
+//    {
+//        uint160 hashSig = Hash160(vchBlockSig);
+//        if (fDebug && GetBoolArg("-printstakemodifier"))
+//            printf("GetStakeEntropyBit: hashSig=%s", hashSig.ToString().c_str());
+//        hashSig >>= 159; // take the first bit of the hash
+//        if (fDebug && GetBoolArg("-printstakemodifier"))
+//            printf(" entropybit=%d\n", hashSig.Get64());
+//        return hashSig.Get64();
+//    }
 
     // peercoin: two types of block: proof-of-work or proof-of-stake
     bool IsProofOfStake() const
@@ -1142,6 +1141,7 @@ public:
     bool GetCoinAge(uint64& nCoinAge) const; // peercoin: calculate total coin age spent in block
     bool SignBlock(const CKeyStore& keystore);
     bool CheckBlockSignature() const;
+    unsigned int GetStakeEntropyBit() const; // ppcoin: entropy bit for stake modifier if chosen by modifier
 
 private:
     bool SetBestChainInner(CTxDB& txdb, CBlockIndex *pindexNew);
@@ -1838,6 +1838,7 @@ public:
                 bool fCheckInputs, bool* pfMissingInputs);
     bool addUnchecked(CTransaction &tx);
     bool remove(CTransaction &tx);
+    void queryHashes(std::vector<uint256>& vtxid);
 
     unsigned long size()
     {
